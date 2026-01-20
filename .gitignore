@@ -1,0 +1,43 @@
+# Ignore everything inside data_mount except .gitkeep
+data_mount/*
+!data_mount/.gitkeep
+
+# R session files
+.Rhistory
+.Rapp.history
+.RData
+.RDataTmp
+.Ruserdata
+
+# RStudio files
+.Rproj.user/
+
+# R package build artifacts
+*-Ex.R
+/*.tar.gz
+/*.Rcheck/
+
+# Vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# OAuth tokens
+.httr-oauth
+
+# knitr/R markdown cache
+*_cache/
+/cache/
+*.utf8.md
+*.knit.md
+
+# R environment file (may contain secrets)
+.Renviron
+
+# pkgdown site
+docs/
+
+# translation temp files
+po/*~
+
+# RStudio Connect
+rsconnect/
