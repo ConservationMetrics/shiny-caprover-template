@@ -3,6 +3,9 @@ FROM rocker/shiny:4.5.1
 # Install R packages at build time (not lazily at runtime)
 # Add your packages here. Example:
 # RUN R -e "install.packages(c('dplyr', 'ggplot2'), repos='https://cloud.r-project.org')"
+#
+# NOTE: If you get "unable to load shared object" errors, see the "Troubleshooting" 
+# section in README.md for how to install packages from source to match system libraries.
 
 # Remove default shiny apps
 RUN rm -rf /srv/shiny-server/*

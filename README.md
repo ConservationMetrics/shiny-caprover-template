@@ -4,6 +4,8 @@ This repository is a starter template for R Shiny applications, packaged with Do
 
 ## Quick Start
 
+We suggest building and running the example app as-is first. Then once you've got that far, go back and start adding your own app content (and building any R package as needed in the Dockerfile).
+
 ### 1. Build the Docker Image
 
 The `shiny` user inside the container needs to read files you mount from your host machine. To make this work, build the image with your user's UID/GID:
@@ -31,19 +33,20 @@ Then open http://localhost:3838
 
 2. Create a new app in CapRover, making sure to check **Has Persistent Data**.
 
-3. In **App Configs > Environment Variables**, add:
+3. In **HTTP Settings**, set the **Container HTTP Port** to `3838`.
+
+4. In **App Configs > Environment Variables**, add:
    ```
    APP_DATA_PATH=/data_mount
    ```
 
-3. In **App Configs > Persistent Directories**, add a volume mount:
+5. In **App Configs > Persistent Directories**, add a volume mount:
    - Path in App: `/data_mount`
-   - Map to a host path or named volume containing your data
+ - Map to a host path or named volume containing your data
 
-4. If you need password protection, in **HTTP Settings > Edit HTTP Basic Auth** assign a username and password. This approach does not allow multiple different usernames.
+6. If you need password protection, in **HTTP Settings > Edit HTTP Basic Auth** assign a username and password. This approach does not allow multiple different usernames.
 
-5. Under the **Deployment** tab, use "Method 6: Deploy via ImageName"
-
+7. Under the **Deployment** tab, use "Method 6: Deploy via ImageName"
 
 ## Project Structure
 
@@ -92,3 +95,63 @@ This keeps container startup fast and ensures reproducible builds.
 2. Add data files to `data_mount/` for local testing
 3. Update the Dockerfile to install any packages you need
 4. Rename `shiny-app.Rproj` if you like
+
+## Troubleshooting
+
+### Application exits during initialization
+
+If you encounter this error message on startup:
+
+```
+[INFO] shiny-server - Error getting worker: Error: The application exited during initialization.
+```
+
+That is an indicator that you might be missing an R package, or that something in the R code is not working as expected. Turn on logging by uncommenting `preserve_logs true;` in `shiny-server.conf` and check the logs on the container in `/var/log/shiny-server/` for more information.
+
+See https://github.com/rstudio/shiny-server/issues/353 for more information.
+
+### Shared library / system library version errors
+
+If your app crashes with errors like:
+
+```
+unable to load shared object '/usr/local/lib/R/site-library/stringi/libs/stringi.so':
+  libicui18n.so.70: cannot open shared object file: No such file or directory
+```
+
+Or similar errors mentioning `.so` files (shared objects), this means an R package was compiled against a different version of system libraries than what's available in the container.
+
+**Solution:** Install those packages from source in the Dockerfile so they compile against the correct system library versions.
+
+**How to identify which packages need source compilation:**
+1. Check the error logs in `/var/log/shiny-server/` - the error will tell you which package failed to load
+2. Look for the library name in the error (e.g., `libicui18n.so` = ICU libraries, used by `stringi`)
+3. Compile that package and any packages that depend on it from source
+
+**Common examples:**
+
+**ICU library issues (stringi/janitor):**
+```dockerfile
+# Install ICU development libraries
+RUN apt-get update && apt-get install -y libicu-dev && rm -rf /var/lib/apt/lists/*
+
+# Compile stringi from source
+RUN R -e "install.packages('stringi', repos='https://cloud.r-project.org', type='source')"
+
+# Compile packages that depend on stringi from source too
+RUN R -e "install.packages(c('snakecase', 'janitor'), repos='https://cloud.r-project.org', type='source', Ncpus=2)"
+```
+
+**ImageMagick library issues (magick package):**
+```dockerfile
+# Install ImageMagick development libraries
+RUN apt-get update && apt-get install -y libmagick++-dev && rm -rf /var/lib/apt/lists/*
+
+# Compile magick from source
+RUN R -e "install.packages('magick', repos='https://cloud.r-project.org', type='source')"
+```
+
+**General pattern:**
+1. Install system library (the `-dev` package)
+2. Compile the R package from source using `type='source'`
+3. Install remaining packages as binaries for speed
