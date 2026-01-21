@@ -89,8 +89,6 @@ RUN R -e "install.packages(c('dplyr', 'ggplot2', 'plotly'), repos='https://cloud
 
 This keeps container startup fast and ensures reproducible builds.
 
-See https://github.com/rstudio/shiny-server/issues/353 for more information.
-
 ## Get building! Your next steps are:
 
 1. Edit `app/app.R` to build your application
@@ -109,6 +107,8 @@ If you encounter this error message on startup:
 ```
 
 That is an indicator that you might be missing an R package, or that something in the R code is not working as expected. Turn on logging by uncommenting `preserve_logs true;` in `shiny-server.conf` and check the logs on the container in `/var/log/shiny-server/` for more information.
+
+See https://github.com/rstudio/shiny-server/issues/353 for more information.
 
 ### Shared library / system library version errors
 
