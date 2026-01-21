@@ -35,19 +35,20 @@ Then open http://localhost:3838
 
 2. Create a new app in CapRover, making sure to check **Has Persistent Data**.
 
-3. In **App Configs > Environment Variables**, add:
+3. In **HTTP Settings**, set the **Container HTTP Port** to `3838`.
+
+4. In **App Configs > Environment Variables**, add:
    ```
    APP_DATA_PATH=/data_mount
    ```
 
-3. In **App Configs > Persistent Directories**, add a volume mount:
+5. In **App Configs > Persistent Directories**, add a volume mount:
    - Path in App: `/data_mount`
-   - Map to a host path or named volume containing your data
+ - Map to a host path or named volume containing your data
 
-4. If you need password protection, in **HTTP Settings > Edit HTTP Basic Auth** assign a username and password. This approach does not allow multiple different usernames.
+6. If you need password protection, in **HTTP Settings > Edit HTTP Basic Auth** assign a username and password. This approach does not allow multiple different usernames.
 
-5. Under the **Deployment** tab, use "Method 6: Deploy via ImageName"
-
+7. Under the **Deployment** tab, use "Method 6: Deploy via ImageName"
 
 ## Project Structure
 
