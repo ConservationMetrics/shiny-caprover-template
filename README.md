@@ -4,11 +4,9 @@ This repository is a starter template for R Shiny applications, packaged with Do
 
 ## Quick Start
 
-### 1. Add packages and runtime libraries to the Dockerfile
+We suggest building and running the example app as-is first. Then once you've got that far, go back and start adding your own app content (and building any R package as needed in the Dockerfile).
 
-See [Adding R Packages](#adding-r-packages) below.
-
-### 2. Build the Docker Image
+### 1. Build the Docker Image
 
 The `shiny` user inside the container needs to read files you mount from your host machine. To make this work, build the image with your user's UID/GID:
 
@@ -19,7 +17,7 @@ docker build --build-arg SHINY_UID=$(id -u) --build-arg SHINY_GID=$(id -g) -t my
 If deploying to a server where the data files are owned by a different user, use that user's UID/GID instead.
 If you installed CapRover on a fresh VM, the correct UID and GID to use there are most likely `1000`.
 
-### 3. Run Locally with Docker
+### 2. Run Locally with Docker
 
 ```bash
 docker run -p 3838:3838 -v "$(pwd)/data_mount:/data_mount" my-shiny-app
@@ -29,7 +27,7 @@ Then open http://localhost:3838
 
 **Without Docker (for development):** Open `app/shiny-app.Rproj` in RStudio and click "Run App". The app will read from `data_mount/` in the repo root.
 
-### 4. Deploy to CapRover
+### 3. Deploy to CapRover
 
 1. Push the Docker image to a container registry that's hooked up in your CapRover deployment.
 
@@ -91,6 +89,15 @@ RUN R -e "install.packages(c('dplyr', 'ggplot2', 'plotly'), repos='https://cloud
 
 This keeps container startup fast and ensures reproducible builds.
 
+See https://github.com/rstudio/shiny-server/issues/353 for more information.
+
+## Get building! Your next steps are:
+
+1. Edit `app/app.R` to build your application
+2. Add data files to `data_mount/` for local testing
+3. Update the Dockerfile to install any packages you need
+4. Rename `shiny-app.Rproj` if you like
+
 ## Troubleshooting
 
 If you encounter this error message on startup:
@@ -100,12 +107,3 @@ If you encounter this error message on startup:
 ```
 
 That is an indicator that you might be missing an R package, or that something in the R code is not working as expected. Turn on logging by uncommenting `preserve_logs true;` in `shiny-server.conf` and check the logs on the container in `/var/log/shiny-server/` for more information.
-
-See https://github.com/rstudio/shiny-server/issues/353 for more information.
-
-## Get building! Your next steps are:
-
-1. Edit `app/app.R` to build your application
-2. Add data files to `data_mount/` for local testing
-3. Update the Dockerfile to install any packages you need
-4. Rename `shiny-app.Rproj` if you like
