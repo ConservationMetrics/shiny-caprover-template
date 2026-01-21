@@ -100,6 +100,8 @@ See https://github.com/rstudio/shiny-server/issues/353 for more information.
 
 ## Troubleshooting
 
+### Application exits during initialization
+
 If you encounter this error message on startup:
 
 ```
@@ -107,3 +109,49 @@ If you encounter this error message on startup:
 ```
 
 That is an indicator that you might be missing an R package, or that something in the R code is not working as expected. Turn on logging by uncommenting `preserve_logs true;` in `shiny-server.conf` and check the logs on the container in `/var/log/shiny-server/` for more information.
+
+### Shared library / system library version errors
+
+If your app crashes with errors like:
+
+```
+unable to load shared object '/usr/local/lib/R/site-library/stringi/libs/stringi.so':
+  libicui18n.so.70: cannot open shared object file: No such file or directory
+```
+
+Or similar errors mentioning `.so` files (shared objects), this means an R package was compiled against a different version of system libraries than what's available in the container.
+
+**Solution:** Install those packages from source in the Dockerfile so they compile against the correct system library versions.
+
+**How to identify which packages need source compilation:**
+1. Check the error logs in `/var/log/shiny-server/` - the error will tell you which package failed to load
+2. Look for the library name in the error (e.g., `libicui18n.so` = ICU libraries, used by `stringi`)
+3. Compile that package and any packages that depend on it from source
+
+**Common examples:**
+
+**ICU library issues (stringi/janitor):**
+```dockerfile
+# Install ICU development libraries
+RUN apt-get update && apt-get install -y libicu-dev && rm -rf /var/lib/apt/lists/*
+
+# Compile stringi from source
+RUN R -e "install.packages('stringi', repos='https://cloud.r-project.org', type='source')"
+
+# Compile packages that depend on stringi from source too
+RUN R -e "install.packages(c('snakecase', 'janitor'), repos='https://cloud.r-project.org', type='source', Ncpus=2)"
+```
+
+**ImageMagick library issues (magick package):**
+```dockerfile
+# Install ImageMagick development libraries
+RUN apt-get update && apt-get install -y libmagick++-dev && rm -rf /var/lib/apt/lists/*
+
+# Compile magick from source
+RUN R -e "install.packages('magick', repos='https://cloud.r-project.org', type='source')"
+```
+
+**General pattern:**
+1. Install system library (the `-dev` package)
+2. Compile the R package from source using `type='source'`
+3. Install remaining packages as binaries for speed
